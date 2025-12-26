@@ -3,7 +3,7 @@
 //! is to delete this file and start with root.zig instead.
 const std = @import("std");
 
-const tokenizer = @import("tokenizer/tokenizer.zig");
+const tokenizer = @import("tokenizer.zig");
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)

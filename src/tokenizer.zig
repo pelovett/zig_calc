@@ -89,7 +89,7 @@ pub fn split(allocator: Allocator, input: *const []const u8) !ArrayList(Token) {
                 tokEnd = i + 1;
                 seenDecimal = true;
             } else {
-                // Can only have one decimal per literal
+                // Can only have one decimal point per literal
                 if (seenDecimal) {
                     return TokenizerError.UnexpectedCharacter;
                 }
