@@ -3,25 +3,25 @@ const ArrayList = std.ArrayList;
 const testing = std.testing;
 const Allocator = std.mem.Allocator;
 
-const Operator = enum {
+pub const Operator = enum {
     add,
     sub,
     mult,
     div,
 };
 
-const Literal = struct {
+pub const Literal = struct {
     start: usize,
     end: usize,
     value: f64,
 };
 
-const Token = union(enum) {
+pub const Token = union(enum) {
     op: Operator,
     lit: Literal,
 };
 
-const TokenizerError = error{
+pub const TokenizerError = error{
     UnexpectedCharacter,
 };
 
@@ -59,7 +59,13 @@ pub fn split(allocator: Allocator, input: *const []const u8) !ArrayList(Token) {
                 // Must be subtraction operator
                 // This will be a new token, so close our old one
                 if (tokStart != null) {
-                    try output.append(Token{ .lit = Literal{ .start = tokStart.?, .end = tokEnd.?, .value = try std.fmt.parseFloat(f64, input.*[tokStart.?..tokEnd.?]) } });
+                    try output.append(Token{
+                        .lit = Literal{
+                            .start = tokStart.?,
+                            .end = tokEnd.?,
+                            .value = try std.fmt.parseFloat(f64, input.*[tokStart.?..tokEnd.?]),
+                        },
+                    });
                     tokStart = null;
                     tokEnd = null;
                     seenDecimal = false;
@@ -69,7 +75,13 @@ pub fn split(allocator: Allocator, input: *const []const u8) !ArrayList(Token) {
         } else if (std.ascii.isWhitespace(char)) {
             // Check if we're inside of a token
             if (tokStart != null) {
-                try output.append(Token{ .lit = Literal{ .start = tokStart.?, .end = tokEnd.?, .value = try std.fmt.parseFloat(f64, input.*[tokStart.?..tokEnd.?]) } });
+                try output.append(Token{
+                    .lit = Literal{
+                        .start = tokStart.?,
+                        .end = tokEnd.?,
+                        .value = try std.fmt.parseFloat(f64, input.*[tokStart.?..tokEnd.?]),
+                    },
+                });
                 tokStart = null;
                 tokEnd = null;
             }
@@ -103,7 +115,13 @@ pub fn split(allocator: Allocator, input: *const []const u8) !ArrayList(Token) {
     }
     // Check if we haven't closed the last literal
     if (tokStart != null) {
-        try output.append(Token{ .lit = Literal{ .start = tokStart.?, .end = tokEnd.?, .value = try std.fmt.parseFloat(f64, input.*[tokStart.?..tokEnd.?]) } });
+        try output.append(Token{
+            .lit = Literal{
+                .start = tokStart.?,
+                .end = tokEnd.?,
+                .value = try std.fmt.parseFloat(f64, input.*[tokStart.?..tokEnd.?]),
+            },
+        });
     }
     return output;
 }
@@ -113,7 +131,11 @@ test "tokenize simple add" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -127,7 +149,11 @@ test "tokenize add with spaces" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 1, .end = 2, .value = 1 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 1, .end = 2, .value = 1 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -141,7 +167,11 @@ test "tokenize long digits" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 3, .value = 123 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 4, .end = 10, .value = 123456 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 3, .value = 123 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 4, .end = 10, .value = 123456 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -155,7 +185,11 @@ test "tokenize simple sub" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } }, Token{ .op = Operator.sub }, Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        Token{ .op = Operator.sub },
+        Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -169,7 +203,11 @@ test "tokenize add leading negative num" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 2, .value = -1 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 3, .end = 4, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 2, .value = -1 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 3, .end = 4, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -183,7 +221,11 @@ test "tokenize negative after operator" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 2, .end = 4, .value = -1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 2, .end = 4, .value = -1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -197,7 +239,11 @@ test "tokenize simple mult" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } }, Token{ .op = Operator.mult }, Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        Token{ .op = Operator.mult },
+        Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -211,7 +257,11 @@ test "tokenize simple div" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } }, Token{ .op = Operator.div }, Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        Token{ .op = Operator.div },
+        Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -225,7 +275,11 @@ test "tokenize simple fraction" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 5, .value = 1.123 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 5, .value = 1.123 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -238,7 +292,11 @@ test "tokenize leading fraction" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 4, .value = 0.123 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 5, .end = 6, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 4, .value = 0.123 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 5, .end = 6, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);
@@ -252,7 +310,11 @@ test "tokenize negative fraction" {
     const output = try split(std.testing.allocator, &input);
     defer output.deinit();
 
-    var expectedArray = [_]Token{ Token{ .lit = Literal{ .start = 0, .end = 6, .value = -1.123 } }, Token{ .op = Operator.add }, Token{ .lit = Literal{ .start = 7, .end = 8, .value = 1 } } };
+    var expectedArray = [_]Token{
+        Token{ .lit = Literal{ .start = 0, .end = 6, .value = -1.123 } },
+        Token{ .op = Operator.add },
+        Token{ .lit = Literal{ .start = 7, .end = 8, .value = 1 } },
+    };
     const expected: []Token = expectedArray[0..];
 
     try testing.expectEqual(expected.len, output.items.len);

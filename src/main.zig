@@ -4,6 +4,7 @@
 const std = @import("std");
 
 const tokenizer = @import("tokenizer.zig");
+const parser = @import("parser.zig");
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
@@ -24,4 +25,5 @@ pub fn main() !void {
 test {
     // To get test library to scan sub-module
     _ = tokenizer;
+    _ = parser;
 }
