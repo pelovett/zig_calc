@@ -69,7 +69,7 @@ fn opToPrecedence(op: Operator) u8 {
 }
 
 // Parse arraylist of tokens into syntax tree
-pub fn parse(allocator: Allocator, input: ArrayList(Token)) !?*TreeNode {
+pub fn parse(allocator: Allocator, input: ArrayList(Token)) !*TreeNode {
     // First convert tokens into doubly-linked list
     var firstListNode: *ListNode = undefined;
     var prevListNode: *ListNode = undefined;
@@ -198,10 +198,7 @@ test "parse simple syntax" {
     try input.append(Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } });
     try input.append(Token{ .op = Operator.add });
     try input.append(Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } });
-    const output = try parse(std.testing.allocator, input) orelse {
-        std.log.err("Parser returned null value!\n", .{});
-        return SyntaxParserError.SyntaxError;
-    };
+    const output = try parse(std.testing.allocator, input);
     defer deallocParseTree(std.testing.allocator, output);
 
     const expected = &TreeNode{
@@ -228,10 +225,7 @@ test "parse multiop syntax" {
     try input.append(Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } });
     try input.append(Token{ .op = Operator.add });
     try input.append(Token{ .lit = Literal{ .start = 4, .end = 5, .value = 1 } });
-    const output = try parse(std.testing.allocator, input) orelse {
-        std.log.err("Parser returned null value!\n", .{});
-        return SyntaxParserError.SyntaxError;
-    };
+    const output = try parse(std.testing.allocator, input);
     defer deallocParseTree(std.testing.allocator, output);
 
     const subtree = &TreeNode{
@@ -267,10 +261,7 @@ test "parse operator preference" {
     try input.append(Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } });
     try input.append(Token{ .op = Operator.mult });
     try input.append(Token{ .lit = Literal{ .start = 4, .end = 5, .value = 1 } });
-    const output = try parse(std.testing.allocator, input) orelse {
-        std.log.err("Parser returned null value!\n", .{});
-        return SyntaxParserError.SyntaxError;
-    };
+    const output = try parse(std.testing.allocator, input);
     defer deallocParseTree(std.testing.allocator, output);
 
     const expected = &TreeNode{
@@ -307,10 +298,7 @@ test "parse double nested preference" {
     try input.append(Token{ .lit = Literal{ .start = 4, .end = 5, .value = 1 } });
     try input.append(Token{ .op = Operator.mult });
     try input.append(Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } });
-    const output = try parse(std.testing.allocator, input) orelse {
-        std.log.err("Parser returned null value!\n", .{});
-        return SyntaxParserError.SyntaxError;
-    };
+    const output = try parse(std.testing.allocator, input);
     defer deallocParseTree(std.testing.allocator, output);
 
     const expected = &TreeNode{
@@ -355,10 +343,7 @@ test "parse mult in tha middle" {
     try input.append(Token{ .lit = Literal{ .start = 4, .end = 5, .value = 1 } });
     try input.append(Token{ .op = Operator.add });
     try input.append(Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } });
-    const output = try parse(std.testing.allocator, input) orelse {
-        std.log.err("Parser returned null value!\n", .{});
-        return SyntaxParserError.SyntaxError;
-    };
+    const output = try parse(std.testing.allocator, input);
     defer deallocParseTree(std.testing.allocator, output);
 
     const expected = &TreeNode{
