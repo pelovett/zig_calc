@@ -24,6 +24,7 @@ const SyntaxParserError = error{
     SyntaxError,
     OpeningWithOperator,
     EndingWithOperator,
+    DivisionByZero,
 };
 
 // Use pointers to nodes to combine previous and next node under current node
@@ -160,6 +161,35 @@ pub fn deallocParseTree(allocator: Allocator, root: ?*TreeNode) void {
     deallocParseTree(allocator, node.left);
     deallocParseTree(allocator, node.right);
     allocator.destroy(node);
+}
+
+pub fn compute(root: *const TreeNode) !f64 {
+    switch (root.this) {
+        .op => |op| {
+            const left = try compute(root.left.?);
+            const right = try compute(root.right.?);
+            switch (op) {
+                .add => {
+                    return left + right;
+                },
+                .sub => {
+                    return left - right;
+                },
+                .mult => {
+                    return left * right;
+                },
+                .div => {
+                    if (right == 0) {
+                        return SyntaxParserError.DivisionByZero;
+                    }
+                    return left / right;
+                },
+            }
+        },
+        .lit => |lit| {
+            return lit.value;
+        },
+    }
 }
 
 test "parse simple syntax" {
@@ -361,4 +391,71 @@ test "parse mult in tha middle" {
         }),
     };
     try testing.expectEqualDeep(expected, output);
+}
+
+test "compute simple syntax" {
+    const input = &TreeNode{
+        .left = @constCast(&TreeNode{
+            .left = null,
+            .right = null,
+            .this = Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        }),
+        .this = Token{ .op = Operator.add },
+        .right = @constCast(&TreeNode{
+            .left = null,
+            .right = null,
+            .this = Token{ .lit = Literal{ .start = 2, .end = 3, .value = 1 } },
+        }),
+    };
+    try testing.expectEqual(2, compute(input));
+}
+
+test "compute complex syntax" {
+    const input = &TreeNode{
+        .left = @constCast(&TreeNode{
+            .left = @constCast(&TreeNode{
+                .left = null,
+                .right = null,
+                .this = Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+            }),
+            .this = Token{ .op = Operator.add },
+            .right = @constCast(&TreeNode{
+                .left = @constCast(&TreeNode{
+                    .left = null,
+                    .right = null,
+                    .this = Token{ .lit = Literal{ .start = 2, .end = 3, .value = 2 } },
+                }),
+                .this = Token{ .op = Operator.mult },
+                .right = @constCast(&TreeNode{
+                    .left = null,
+                    .right = null,
+                    .this = Token{ .lit = Literal{ .start = 4, .end = 5, .value = 4 } },
+                }),
+            }),
+        }),
+        .this = Token{ .op = Operator.add },
+        .right = @constCast(&TreeNode{
+            .left = null,
+            .right = null,
+            .this = Token{ .lit = Literal{ .start = 6, .end = 7, .value = 1 } },
+        }),
+    };
+    try testing.expectEqual(10, compute(input));
+}
+
+test "detect division by zero" {
+    const input = &TreeNode{
+        .left = @constCast(&TreeNode{
+            .left = null,
+            .right = null,
+            .this = Token{ .lit = Literal{ .start = 0, .end = 1, .value = 1 } },
+        }),
+        .this = Token{ .op = Operator.div },
+        .right = @constCast(&TreeNode{
+            .left = null,
+            .right = null,
+            .this = Token{ .lit = Literal{ .start = 2, .end = 3, .value = 0 } },
+        }),
+    };
+    try testing.expectError(SyntaxParserError.DivisionByZero, compute(input));
 }
